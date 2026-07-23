@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String           @id @default(cuid())
+  nomorInduk        String           @unique
+  email             String           @unique
+  password          String
+  nama              String
+  role              String           @default("KARYAWAN")
+  jabatan           String?
+  noTelpon          String?
+  alamat            String?
+  foto              String?
+  tanggalMasuk      DateTime          @default(now())
+  isActive          Boolean          @default(true)
+  departmentId       String?
+  shiftId           String?
+  department        Department?       @relation(fields: [departmentId], references: [id])
+  shift             Shift?            @relation(fields: [shiftId], references: [id])
+  attendances       Attendance[]
+  leaveRequests     LeaveRequest[]
+  approvedAttendances Attendance[]   @relation("AttendanceApprover")
+  verifiedAttendances Attendance[]   @relation("AttendanceVerifier")
+  approvals         Approval[]        @relation("Approver")
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@map("users")
+}
+
+model Department {
+  id          String      @id @default(cuid())
+  nama        String      @unique
+  deskripsi   String?
+  users       User[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("departments")
+}
+
+model Shift {
+  id          String      @id @default(cuid())
+  nama        String      @unique
+  jamMasuk    String      // HH:mm
+  jamPulang   String      // HH:mm
+  toleransi   Int         @default(15) // menit grace period
+  users       User[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("shifts")
+}
+
+model Location {
+  id          String      @id @default(cuid())
+  nama        String
+  latitude    Float
+  longitude   Float
+  radius      Int         @default(100) // meter
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("locations")
+}
+
+model Attendance {
+  id              String           @id @default(cuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id])
+  tanggal         DateTime         @default(now())
+  checkIn         DateTime?
+  checkOut        DateTime?
+  fotoCheckIn     String? @db.MediumText
+  fotoCheckOut    String? @db.MediumText
+  latCheckIn      Float?
+  lngCheckIn      Float?
+  latCheckOut     Float?
+  lngCheckOut     Float?
+  status          String           @default("HADIR")
+  keterangan      String?
+  isApproved      Boolean          @default(true)
+  approvedById    String?
+  approvedBy      User?            @relation("AttendanceApprover", fields: [approvedById], references: [id])
+  verifikasi      String?                                     // "AMAN" | "BERBOHONG"
+  verifikasiById  String?
+  verifikasiBy    User?            @relation("AttendanceVerifier", fields: [verifikasiById], references: [id])
+  catatanVerifikasi String?
+  verifiedAt      DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("attendances")
+}
+
+model LeaveRequest {
+  id              String           @id @default(cuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id])
+  tipe            String
+  tanggalMulai    DateTime
+  tanggalSelesai  DateTime
+  alasan          String
+  lampiran        String?
+  status          String           @default("PENDING")
+  catatanPersetujuan String?
+  approvals       Approval[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("leave_requests")
+}
+
+model Approval {
+  id              String           @id @default(cuid())
+  leaveRequestId  String
+  leaveRequest    LeaveRequest     @relation(fields: [leaveRequestId], references: [id])
+  approverId      String
+  approver        User             @relation("Approver", fields: [approverId], references: [id])
+  tingkat         Int              // 1 = Manager, 2 = HR
+  status          String           @default("PENDING")
+  catatan         String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("approvals")
+}
+
+model PklIzin {
+  id              String           @id @default(cuid())
+  userId          String
+  namaLengkap     String
+  usernameTelegram String
+  asalSekolah     String
+  pembimbingPkl   String
+  tanggalIzin     DateTime
+  durasi          String
+  keperluan       String
+  keterangan      String
+  bukti           String           @default("[]") // JSON array of file paths
+  status          String           @default("PENDING")
+  catatan         String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("pkl_izin")
+}
+
+model Notification {
+  id              String           @id @default(cuid())
+  userId          String
+  judul           String
+  pesan           String
+  isRead          Boolean          @default(false)
+  tipe            String?          // info, warning, success, error
+  link            String?
+  createdAt       DateTime         @default(now())
+
+  @@map("notifications")
+}
