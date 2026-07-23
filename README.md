@@ -2,6 +2,10 @@
 
 Aplikasi absensi perusahaan berbasis web dengan fitur check-in/out berbasis lokasi, manajemen izin/cuti, approval berjenjang, dan dashboard interaktif. Dibangun dengan **Next.js 14**, **Prisma**, **MySQL/MariaDB**, dan **Three.js**.
 
+🌐 **Live Demo:** [https://seraviel.my.id](https://seraviel.my.id)
+
+> **Catatan:** Domain menggunakan Cloudflare proxy. Pastikan DNS Cloudflare mengarah ke IP publik server (114.10.46.189).
+
 ## Fitur
 
 - **Absensi Harian** — Check-in & check-out dengan foto dan lokasi geospasial
